@@ -35,13 +35,17 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/api/users/**", "/api/endusers/**", "/api/payments/**").permitAll()
-                        .requestMatchers("/developer/**").hasAnyRole("ORG_ADMIN", "DEVELOPER")
-                        .requestMatchers("/staff/**").authenticated()
-                        .requestMatchers("/api/transactions/**").hasAnyRole("END_USER", "ORG_ADMIN")
-                        .requestMatchers("/api/**").authenticated()
-                        .anyRequest().denyAll()
+
+                                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                                .requestMatchers("/api/users/**", "/api/endusers/**", "/api/payments/**").permitAll()
+                                .requestMatchers("/api/auth/register", "/api/auth/login").permitAll() // 👈 add these
+                                .requestMatchers("/developer/**").hasAnyRole("ORG_ADMIN", "DEVELOPER")
+                                .requestMatchers("/staff/**").authenticated()
+                                .requestMatchers("/api/transactions/**").hasAnyRole("END_USER", "ORG_ADMIN")
+                                .requestMatchers("/api/**").authenticated()
+                                .anyRequest().denyAll()
+
+
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .userDetailsService(userDetailsService);
