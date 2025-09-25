@@ -1,0 +1,17 @@
+package com.clyrafy.wallet.transaction.dtos.request;
+
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.util.List;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+public class BulkFiatDepositRequest {
+    private String senderWalletValue;
+    private List<FiatDepositRequest> requests;
+}

@@ -1,0 +1,67 @@
+{
+    "checksum": "dd9b1ee5143d1b17b20099bfab0784dde37a0004c32cf67bba4022adc3b9b359",
+    "data": {
+    "id": "08cba7c1-ced2-4338-9caa-1c2cf66baae7",
+    "createdAt": 1756282804008,
+    "updatedAt": 1756282834845,
+    "title": " Generate tests for initializeDepositTransactio...",
+    "messages": [
+        {
+            "id": "19a5b2a9-b1d3-4f69-9beb-48a53f957e56",
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": " Generate tests for initializeDepositTransaction method"
+                }
+            ],
+            "context": {
+                "currentFile": {
+                    "path": "C:\\Users\\DELL\\Desktop\\palace\\clrayfiwallet\\src\\main\\java\\com\\clyrafy\\wallet\\service\\implementations\\PerformTransactionServiceImpl.java",
+                    "fsPath": "C:/Users/DELL/Desktop/palace/clrayfiwallet/src/main/java/com/clyrafy/wallet/service/implementations/PerformTransactionServiceImpl.java",
+                    "content": "package com.clyrafy.wallet.service.implementations;\n\nimport com.clyrafy.wallet.dto.PerformTransactionRequest;\nimport com.clyrafy.wallet.dto.PerformTransactionResponses;\nimport com.clyrafy.wallet.model.entity.EndUser;\nimport com.clyrafy.wallet.model.entity.EndUserWallet;\nimport com.clyrafy.wallet.model.entity.OrganizationWallet;\nimport com.clyrafy.wallet.model.entity.PerformTransaction;\nimport com.clyrafy.wallet.model.enums.TransactionType;\nimport com.clyrafy.wallet.model.enums.WalletType;\nimport com.clyrafy.wallet.repository.EndUserRepository;\nimport com.clyrafy.wallet.repository.EndUserWalletRepository;\nimport com.clyrafy.wallet.repository.OrganizationWalletRepository;\nimport com.clyrafy.wallet.repository.PerformTransactionRepository;\nimport com.clyrafy.wallet.service.services.PerformTransactionService;\nimport lombok.RequiredArgsConstructor;\nimport org.springframework.beans.factory.annotation.Value;\nimport org.springframework.stereotype.Service;\nimport org.springframework.transaction.annotation.Transactional;\n\nimport java.math.BigDecimal;\nimport java.time.LocalDateTime;\nimport java.util.UUID;\n\n@Service\n@RequiredArgsConstructor\npublic class PerformTransactionServiceImpl  implements PerformTransactionService {\n    private final OrganizationWalletRepository organizationWalletRepository;\n    private final EndUserWalletRepository endUserWalletRepository;\n    private final CentralPoolService centralPoolService;\n    private final PaystackService paystackService;\n    private final PerformTransactionRepository performTransactionRepository;\n\n    /** ---------------- Deposit Flow ---------------- **/\n\n    @Transactional\n    @Override\n    public String initializeDepositTransaction(BigDecimal amount, String email, String reference) {\n        checkAmountPositive(request.getAmount());\n        return null;\n\n\n        \n    }\n\n    @Transactional\n    public PerformTransactionResponses verifyAndDeposit(String reference, PerformTransactionRequest request) {\n        // Verify payment with Paystack\n        boolean success = paystackService.verifyTransaction(reference);\n        if (!success) {\n            throw new IllegalArgumentException(\"Transaction verification failed\");\n        }\n\n        // Fetch wallets\n        OrganizationWallet orgWallet = organizationWalletRepository.findById(UUID.fromString(request.getOrganizationId()))\n                .orElseThrow(() -> new IllegalArgumentException(\"Organization wallet not found\"));\n\n        EndUserWallet endUserWallet = endUserWalletRepository.findById(UUID.fromString(request.getReceiverId()))\n                .orElseThrow(() -> new IllegalArgumentException(\"End-user wallet not found\"));\n\n        if (!endUserWallet.getOrganizationId().equals(orgWallet.getId())) {\n            throw new IllegalArgumentException(\"End-user does not belong to this organization.\");\n        }\n\n        // Update balances\n        centralPoolService.updateFiatBalance(request.getAmount());\n        orgWallet.setBalanceFiat(orgWallet.getBalanceFiat().add(request.getAmount()));\n        endUserWallet.setBalanceFiat(endUserWallet.getBalanceFiat().add(request.getAmount()));\n\n        organizationWalletRepository.save(orgWallet);\n        endUserWalletRepository.save(endUserWallet);\n\n        // Update transaction to SUCCESS\n        PerformTransaction transaction = performTransactionRepository.findByReference(reference)\n                .orElseThrow(() -> new IllegalArgumentException(\"Transaction not found\"));\n        transaction.setStatus(\"SUCCESS\");\n        transaction.setUpdatedAt(LocalDateTime.now());\n        performTransactionRepository.save(transaction);\n\n        // Build response DTO\n        return PerformTransactionResponses.builder()\n                .message(\"Deposit successful\")\n                .reference(reference)\n                .organizationId(request.getOrganizationId())\n                .receiverId(request.getReceiverId())\n                .amount(request.getAmount())\n                .currency(request.getCurrency())\n                .status(\"SUCCESS\")\n                .organizationBalance(orgWallet.getBalanceFiat())\n                .userBalance(endUserWallet.getBalanceFiat())\n                .timestamp(LocalDateTime.now())\n                .type(TransactionType.DEPOSIT)\n                .build();\n    }\n\n    /** ---------------- Withdrawal Flow ---------------- **/\n\n    @Transactional\n    public PerformTransactionResponses performWithdrawalTransaction(PerformTransactionRequest request) {\n        checkAmountPositive(request.getAmount());\n\n        OrganizationWallet orgWallet = organizationWalletRepository.findById(UUID.fromString(request.getOrganizationId()))\n                .orElseThrow(() -> new IllegalArgumentException(\"Organization wallet not found\"));\n\n        EndUserWallet endUserWallet = endUserWalletRepository.findById(UUID.fromString(request.getReceiverId()))\n                .orElseThrow(() -> new IllegalArgumentException(\"End-user wallet not found\"));\n\n        // Check sufficient balances\n        if (endUserWallet.getBalanceFiat().compareTo(request.getAmount()) < 0) {\n            throw new IllegalArgumentException(\"Insufficient end-user balance.\");\n        }\n        if (orgWallet.getBalanceFiat().compareTo(request.getAmount()) < 0) {\n            throw new IllegalArgumentException(\"Insufficient organization balance.\");\n        }\n\n        // Deduct balances\n        endUserWallet.setBalanceFiat(endUserWallet.getBalanceFiat().subtract(request.getAmount()));\n        orgWallet.setBalanceFiat(orgWallet.getBalanceFiat().subtract(request.getAmount()));\n        centralPoolService.deductFiatBalance(request.getAmount());\n\n        endUserWalletRepository.save(endUserWallet);\n        organizationWalletRepository.save(orgWallet);\n\n        // Record withdrawal transaction\n        PerformTransaction transaction = PerformTransaction.builder()\n                .reference(UUID.randomUUID().toString())\n                .amount(request.getAmount())\n                .currency(request.getCurrency().name())\n                .organizationId(request.getOrganizationId())\n                .receiverId(request.getReceiverId())\n                .status(\"SUCCESS\")\n                .type(TransactionType.WITHDRAWAL)\n                .createdAt(LocalDateTime.now())\n                .build();\n        performTransactionRepository.save(transaction);\n\n        // Return DTO\n        return PerformTransactionResponses.builder()\n                .message(\"Withdrawal successful\")\n                .reference(transaction.getReference())\n                .organizationId(request.getOrganizationId())\n                .receiverId(request.getReceiverId())\n                .amount(request.getAmount())\n                .currency(request.getCurrency())\n                .status(\"SUCCESS\")\n                .organizationBalance(orgWallet.getBalanceFiat())\n                .userBalance(endUserWallet.getBalanceFiat())\n                .timestamp(LocalDateTime.now())\n                .type(TransactionType.WITHDRAWAL)\n                .build();\n    }\n\n    /** ---------------- Helper ---------------- **/\n\n    private void checkAmountPositive(BigDecimal amount) {\n        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {\n            throw new IllegalArgumentException(\"Amount must be positive.\");\n        }\n    }\n\n}\n",
+                    "language": "java"
+                },
+                "codebaseEnabled": true
+            },
+            "createdAt": 1756282804118,
+            "isInternal": false,
+            "rawContent": {
+                "type": "doc",
+                "content": [
+                    {
+                        "type": "paragraph",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": " Generate tests for initializeDepositTransaction method"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "autoAppliedRules": []
+        },
+        {
+            "id": "2c0d1e66-c0a5-4325-852e-1e2589881f99",
+            "role": "system",
+            "content": [
+                {
+                    "type": "errorText",
+                    "text": "Could not establish websocket connection. Please try again later.",
+                    "actions": [
+                        {
+                            "type": "externalAction",
+                            "title": "Regenerate",
+                            "action": "regenerateLastAnswer"
+                        }
+                    ]
+                }
+            ],
+            "createdAt": 1756282834841,
+            "isInternal": false
+        }
+    ],
+    "isUnitTestsAgent": true
+}
+}

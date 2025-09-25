@@ -1,0 +1,15 @@
+<component name="InspectionProjectProfileManager">
+  <profile version="1.0">
+    <option name="myName" value="Project Default" />
+    <inspection_tool class="AutoCloseableResource" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="METHOD_MATCHER_CONFIG" value="java.util.Formatter,format,java.io.Writer,append,com.google.common.base.Preconditions,checkNotNull,org.hibernate.Session,close,java.io.PrintWriter,printf,java.io.PrintStream,printf,java.lang.foreign.Arena,ofAuto,java.lang.foreign.Arena,global,org.mockito.MockitoAnnotations,openMocks" />
+    </inspection_tool>
+    <inspection_tool class="IncorrectHttpHeaderInspection" enabled="true" level="WARNING" enabled_by_default="true">
+      <option name="customHeaders">
+        <set>
+          <option value="Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJraXJldGlyMjk5QGNzcGF1cy5jb20iLCJ1c2VySWQiOiJiNTkwM2YxMS03NWViLTQwMDQtOTcyMC1lODhjNjFlMDE4MmEiLCJyb2xlIjoiT1JHX0FETUlOIiwiaWF0IjoxNzU3MzY0MDEzLCJleHAiOjE3NTczNjQ2MTN9.RACCyRy9GnFV3ckJEyDx4y7Klu7bFKCsEtl3I-n3IYU" />
+        </set>
+      </option>
+    </inspection_tool>
+  </profile>
+</component>

@@ -1,0 +1,103 @@
+{
+    "checksum": "42851598816c3c3b386d2e56bde678072a9199e3b78e4464e4e5b6632e734fea",
+    "data": {
+    "id": "2607d700-cc04-411d-9b10-a11d01413508",
+    "createdAt": 1756401694422,
+    "updatedAt": 1756401697062,
+    "title": "Fix this: when(paystackService.deposit(eq(200.0...",
+    "messages": [
+        {
+            "id": "4fd73011-aec2-46fe-bacb-dcf5d56bed0f",
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "Fix this:"
+                },
+                {
+                    "type": "codeSnippet",
+                    "text": "when(paystackService.deposit(eq(200.0), eq(\"test-wallet\"), anyString())).thenReturn();",
+                    "language": "java"
+                },
+                {
+                    "type": "text",
+                    "text": "Cannot resolve method 'thenReturn()'"
+                }
+            ],
+            "context": {
+                "currentFile": {
+                    "path": "C:\\Users\\DELL\\Desktop\\palace\\clrayfiwallet\\src\\test\\java\\com\\clyrafy\\wallet\\service\\implementation\\TransactionServiceImplTest.java",
+                    "fsPath": "C:/Users/DELL/Desktop/palace/clrayfiwallet/src/test/java/com/clyrafy/wallet/service/implementation/TransactionServiceImplTest.java",
+                    "content": "package com.clyrafy.wallet.service.implementation;\n\nimport com.clyrafy.wallet.data.Transaction;\nimport com.clyrafy.wallet.data.WalletAddress;\nimport com.clyrafy.wallet.dtos.request.DepositRequest;\nimport com.clyrafy.wallet.dtos.request.WithdrawRequest;\nimport com.clyrafy.wallet.dtos.responses.TransactionResponse;\nimport com.clyrafy.wallet.repository.WalletRepository;\nimport com.clyrafy.wallet.service.interfaces.TransactionMapper;\nimport org.junit.jupiter.api.BeforeEach;\nimport org.junit.jupiter.api.Test;\nimport org.mockito.InjectMocks;\nimport org.mockito.Mock;\nimport org.mockito.MockitoAnnotations;\n\nimport java.util.Optional;\nimport java.util.UUID;\n\nimport static org.junit.jupiter.api.Assertions.*;\nimport static org.mockito.ArgumentMatchers.*;\nimport static org.mockito.Mockito.*;\n\nclass TransactionServiceImplTest {\n    @Mock\n    private WalletRepository walletRepository;\n\n    @Mock\n    private PaystackService paystackService;\n\n    @Mock\n    private TransactionMapper transactionMapper;\n\n    @InjectMocks\n    private TransactionServiceImpl transactionService;\n\n    private WalletAddress testWallet;\n\n    @BeforeEach\n    void setUp() {\n        MockitoAnnotations.openMocks(this);\n\n        testWallet = new WalletAddress();\n        testWallet.setId(1L);\n        testWallet.setBalance(1000.0);\n        testWallet.setValue(\"test-wallet\");\n    }\n\n    @Test\n    void deposit() {\n        DepositRequest request = new DepositRequest();\n        request.setValue(\"test-wallet\");\n        request.setAmount(200.0);\n\n        Transaction txn = new Transaction();\n        txn.setId(1L);\n        txn.setReference( UUID.randomUUID().toString());\n\n        TransactionResponse response = new TransactionResponse();\n        response.setReference(txn.getReference());\n        response.setStatus(\"SUCCESS\");\n\n        when(walletRepository.findAllByValue(\"test-wallet\"))\n                .thenReturn( Optional.of(testWallet));\n        when(paystackService.deposit(eq(200.0), eq(\"test-wallet\"), anyString())).thenReturn();\n        when(transactionMapper.toResponse(any( Transaction.class)))\n                .thenReturn(response);\n\n        TransactionResponse result = transactionService.deposit(request);\n\n        assertNotNull(result);\n        assertEquals(\"SUCCESS\", result.getStatus());\n        verify(walletRepository).findAllByValue(\"test-wallet\");\n        verify(paystackService).deposit(eq(200.0), eq(\"test-wallet\"), anyString());\n    }\n\n    @Test\n    void withdraw() {\n        WithdrawRequest request = new WithdrawRequest();\n        request.setValue(\"test-wallet\");\n        request.setAmount(300.0);\n\n        Transaction txn = new Transaction();\n        txn.setId(2L);\n        txn.setReference(UUID.randomUUID().toString());\n\n        TransactionResponse response = new TransactionResponse();\n        response.setReference(txn.getReference());\n        response.setStatus(\"SUCCESS\");\n\n        when(walletRepository.findAllByValue(\"test-wallet\"))\n                .thenReturn(Optional.of(testWallet));\n        when(paystackService.withdraw(eq(300.0), eq(\"test-wallet\"), anyString()))\n                .thenReturn(true);\n        when(transactionMapper.toResponse(any(Transaction.class)))\n                .thenReturn(response);\n\n        TransactionResponse result = transactionService.withdraw(request);\n\n        assertNotNull(result);\n        assertEquals(\"SUCCESS\", result.getStatus());\n        verify(walletRepository).findAllByValue(\"test-wallet\");\n        verify(paystackService).withdraw(eq(300.0), eq(\"test-wallet\"), anyString());\n    }\n\n    @Test\n    void testWithdrawInsufficientBalance() {\n        WithdrawRequest request = new WithdrawRequest();\n        request.setValue(\"test-wallet\");\n        request.setAmount(2000.0); // greater than balance\n\n        when(walletRepository.findAllByValue(\"test-wallet\"))\n                .thenReturn(Optional.of(testWallet));\n\n        RuntimeException ex = assertThrows(RuntimeException.class,\n                () -> transactionService.withdraw(request));\n\n        assertEquals(\"Insufficient balance\", ex.getMessage());\n    }\n\n    @Test\n    void testWalletNotFound() {\n        DepositRequest request = new DepositRequest();\n        request.setValue(\"unknown-wallet\");\n        request.setAmount(100.0);\n\n        when(walletRepository.findAllByValue(\"unknown-wallet\"))\n                .thenReturn(Optional.empty());\n\n        RuntimeException ex = assertThrows(RuntimeException.class,\n                () -> transactionService.deposit(request));\n\n        assertEquals(\"Wallet not found\", ex.getMessage());\n    }\n    }\n",
+                    "language": "java"
+                },
+                "codebaseEnabled": true
+            },
+            "createdAt": 1756401694475,
+            "isInternal": false,
+            "rawContent": {
+                "type": "doc",
+                "content": [
+                    {
+                        "type": "paragraph",
+                        "content": [
+                            {
+                                "type": "text",
+                                "text": "Fix this:"
+                            },
+                            {
+                                "type": "codeBlock",
+                                "attrs": {
+                                    "language": "java"
+                                },
+                                "content": [
+                                    {
+                                        "type": "text",
+                                        "text": "when(paystackService.deposit(eq(200.0), eq(\"test-wallet\"), anyString())).thenReturn();"
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "text",
+                                "text": "Cannot resolve method 'thenReturn()'"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "autoAppliedRules": []
+        },
+        {
+            "id": "25937449-5c9e-4f60-94e8-71646ef589cc",
+            "role": "system",
+            "content": [
+                {
+                    "type": "errorText",
+                    "text": "",
+                    "actions": [
+                        {
+                            "type": "upgradePlan",
+                            "title": "Upgrade plan",
+                            "waitSeconds": 14058
+                        },
+                        {
+                            "type": "externalAction",
+                            "title": "Try Again",
+                            "action": "regenerateLastAnswer"
+                        }
+                    ]
+                }
+            ],
+            "createdAt": 1756401697062,
+            "isInternal": false
+        }
+    ],
+    "isAgent": true,
+    "isCustomAgent": false,
+    "isUnitTestsAgent": false,
+    "isE2EAgent": false,
+    "isWebDevAgent": false,
+    "isQnaAgent": false,
+    "isRepoInfoAgent": false
+}
+}
