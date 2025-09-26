@@ -7,8 +7,8 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class HomeController {
 
-    @GetMapping("/home/{name}")
-    public String ourHomeController(@PathVariable("name") String name) {
-        return String.format( "Hi %s, Server is working", name );
+    @GetMapping("/")
+    public String ourHomeController() {
+        return "Server is working";
     }
 }

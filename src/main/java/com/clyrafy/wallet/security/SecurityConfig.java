@@ -43,7 +43,7 @@ public class SecurityConfig {
                                 .requestMatchers("/staff/**").authenticated()
                                 .requestMatchers("/api/transactions/**").hasAnyRole("END_USER", "ORG_ADMIN")
                                 .requestMatchers("/api/**").authenticated()
-                                .anyRequest().denyAll()
+                                .anyRequest().permitAll()
 
 
                 )
