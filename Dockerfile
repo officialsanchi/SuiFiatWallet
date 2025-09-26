@@ -17,7 +17,7 @@ WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
 
 # Render injects $PORT dynamically
-ENV PORT=10000
-EXPOSE 10000
+ENV PORT=8080
+EXPOSE 8080
 
 ENTRYPOINT ["sh", "-c", "java -Dserver.port=$PORT -jar app.jar"]
