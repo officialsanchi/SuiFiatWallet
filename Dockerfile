@@ -18,6 +18,6 @@ COPY --from=build /app/target/*.jar app.jar
 
 # Render injects $PORT dynamically
 ENV PORT=8080
-EXPOSE 8080
+EXPOSE $PORT
 
-ENTRYPOINT ["sh", "-c", "java -Dserver.port=$PORT -jar app.jar"]
+ENTRYPOINT ["sh", "-c", "java -Dserver.port=$PORT --server.address=0.0.0.0 -jar app.jar"]
