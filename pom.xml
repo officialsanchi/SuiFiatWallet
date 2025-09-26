@@ -178,6 +178,6 @@
                 </configuration>
             </plugin>
         </plugins>
-        <finalName>clrayfi-wallet</finalName>
+<!--        <finalName>clrayfi-wallet</finalName>-->
     </build>
 </project>
