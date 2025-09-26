@@ -1,22 +1,20 @@
-# Build stage
-FROM maven:3.9.6-eclipse-temurin-17 AS build
+# --- Build stage ---
+FROM maven:3.9.5-eclipse-temurin-17 AS build
 WORKDIR /app
-COPY pom.xml .
-COPY src ./src
-RUN mvn -B -DskipTests clean package
-# Build stage
-FROM maven:3.9.6-eclipse-temurin-17 AS build
-WORKDIR /app
+# only copy what rebuilds less often first (speeds caching)
 COPY pom.xml .
 COPY src ./src
 RUN mvn -B -DskipTests clean package
 
-# Run stage (slim runtime, no Maven)
-FROM eclipse-temurin:17-jre-alpine
+# --- Runtime stage ---
+FROM eclipse-temurin:17-jre
 WORKDIR /app
+# copy jar produced by maven build (adjust path if different)
 COPY --from=build /app/target/*.jar app.jar
 
-# Render injects $PORT dynamically
-ENV PORT=8080
-EXPOSE $PORT
-ENTRYPOINT ["sh", "-c", "java -Dserver.port=$PORT -jar app.jar --server.address=0.0.0.0"]
+# Expose a port for clarity (Render uses PORT env var at runtime)
+EXPOSE 8080
+
+# set the JVM to use the PORT env var from Render
+# server.port=$PORT ensures Spring uses Render's assigned port
+ENTRYPOINT ["sh", "-c", "java -Xms256m -Xmx512m -Djava.security.egd=file:/dev/./urandom -Dserver.port=$PORT -jar /app/app.jar"]
